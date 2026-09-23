@@ -1,0 +1,15 @@
+node_modules/
+dist/
+release/
+.cache/
+test-results/
+native/bin/
+native/obj/
+*.log
+PibbleData/
+.env
+.env.*
+!.env.example
+!.env.sample
+# Local visual references; runtime assets live in public/.
+/images/

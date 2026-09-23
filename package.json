@@ -1,0 +1,30 @@
+{
+  "name": "prestera",
+  "version": "0.6.3",
+  "private": true,
+  "description": "Приватные комнаты для звонков, музыки и общения",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "npm run build && node scripts/start.mjs",
+    "dev": "npm run start",
+    "test": "node --test tests/*.test.cjs",
+    "test:electron": "node scripts/test-electron.mjs",
+    "test:security-desktop": "node tests/security-desktop.mjs",
+    "test:desktop": "node tests/desktop.mjs",
+    "build:native": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-native.ps1",
+    "package": "npm run build && node scripts/package.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.577.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "electron": "44.4.3",
+    "esbuild": "^0.25.12",
+    "playwright": "^1.58.0",
+    "prettier": "^3.8.1"
+  }
+}

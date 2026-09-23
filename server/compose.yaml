@@ -1,0 +1,41 @@
+services:
+  signaling:
+    build: .
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      PRESTERA_SERVER_KEY: ${PRESTERA_SERVER_KEY:?Run setup.sh}
+      TURN_HOST: ${DOMAIN:?Run setup.sh}
+      TURN_SECRET: ${TURN_SECRET:?Run setup.sh}
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "2" }
+  https:
+    image: caddy:2
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "2" }
+  turn:
+    image: coturn/coturn:4.18.0-r0
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./turnserver.conf:/etc/coturn/turnserver.conf:ro
+    command: ["-c", "/etc/coturn/turnserver.conf"]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "2" }
+volumes:
+  caddy-data:
+  caddy-config:

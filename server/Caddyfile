@@ -1,0 +1,9 @@
+{$DOMAIN} {
+  @prestera path /relay /health
+  handle @prestera {
+    reverse_proxy 127.0.0.1:8787
+  }
+  handle {
+    respond "Prestera" 200
+  }
+}

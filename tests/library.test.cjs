@@ -1,0 +1,32 @@
+const { test } = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const { MusicLibrary } = require("../desktop/library.cjs");
+test("Playlists survive restart, preserve order and only read explicitly added audio files", async () => {
+  const root = path.join(__dirname, "..", ".cache");
+  fs.mkdirSync(root, { recursive: true });
+  const dir = fs.mkdtempSync(path.join(root, "library-"));
+  const audio = path.join(dir, "song.wav");
+  fs.writeFileSync(audio, Buffer.from("test-audio"));
+  let library = new MusicLibrary(dir);
+  let state = library.update({ action: "create", name: "Evening" }),
+    id = state.selected;
+  state = library.add(id, [audio, audio]);
+  assert.equal(state.playlists[0].tracks.length, 1);
+  assert.equal(state.playlists[0].tracks[0].path, undefined);
+  const track = state.playlists[0].tracks[0].id;
+  library = new MusicLibrary(dir);
+  assert.equal(library.snapshot().selected, id);
+  assert.equal((await library.read(track)).toString(), "test-audio");
+  await assert.rejects(library.read("../settings.json"));
+  library.update({ action: "rename", id, name: "Night" });
+  assert.equal(new MusicLibrary(dir).snapshot().playlists[0].name, "Night");
+  fs.renameSync(audio, path.join(dir, "moved.wav"));
+  assert.equal(library.snapshot().playlists[0].tracks[0].missing, true);
+  await assert.rejects(library.read(track), /перемещён/);
+  library.update({ action: "remove", id, track });
+  assert.equal(library.snapshot().playlists[0].tracks.length, 0);
+  library.update({ action: "delete", id });
+  assert.equal(new MusicLibrary(dir).snapshot().playlists.length, 0);
+});

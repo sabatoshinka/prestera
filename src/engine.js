@@ -3,6 +3,7 @@ import { profileData, safeBanner } from "./profile-data";
 import { EventAudio } from "./event-audio";
 import { captureWindow } from "./window-video";
 import { videoStats } from "./stream-stats";
+import { streamBitrate } from "./stream-quality";
 import {
   ScreenRecovery,
   screenParameters,
@@ -194,6 +195,16 @@ export class ClubEngine {
     const old = this.settings;
     this.settings = settings;
     this.applyVolumes();
+    if (this.shareQuality && old.streamMbps !== settings.streamMbps) {
+      this.shareQuality = {
+        ...this.shareQuality,
+        bitrate: streamBitrate(settings.streamMbps, this.sharePresetBitrate),
+      };
+      await Promise.all(
+        [...this.peers.values()].map((peer) => this.limitBitrates(peer)),
+      );
+      this.emit();
+    }
     if (
       JSON.stringify(profileData(old)) !==
         JSON.stringify(profileData(settings)) ||
@@ -766,7 +777,15 @@ export class ClubEngine {
     this.shareStarting = true;
     const room = this.room;
     let request;
-    const quality = QUALITY[choice.quality] || QUALITY["1080p60"];
+    const preset = QUALITY[choice.quality] || QUALITY["1080p60"];
+    this.sharePresetBitrate = preset.bitrate;
+    const quality = {
+      ...preset,
+      bitrate: streamBitrate(
+        choice.streamMbps ?? this.settings.streamMbps,
+        preset.bitrate,
+      ),
+    };
     this.shareQuality = quality;
     let video,
       audio,
@@ -1292,6 +1311,7 @@ export class ClubEngine {
                 network: stats,
                 source: sourceTrack.getSettings(),
                 bitrate: this.shareQuality?.bitrate || 10_000_000,
+                presetBitrate: this.sharePresetBitrate,
                 now: performance.now(),
               })
             ) {

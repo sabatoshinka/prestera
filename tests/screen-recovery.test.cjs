@@ -48,6 +48,17 @@ test("loss, CPU pressure, insufficient or missing network statistics prevent rec
     assert.equal(recovery.shouldRecover(sample(12000)), false);
   }
 });
+
+test("a high custom ceiling does not require that entire ceiling to recover, but actual traffic still needs headroom", () => {
+  const recovery = new ScreenRecovery();
+  const changes = { bitrate: 50_000_000, presetBitrate: 10_000_000 };
+  assert.equal(recovery.shouldRecover(sample(0, changes)), false);
+  assert.equal(recovery.shouldRecover(sample(10000, changes)), true);
+  const busy = new ScreenRecovery();
+  const active = { ...changes, outbound: { ...sample(0).outbound, kbps: 14000 } };
+  assert.equal(busy.shouldRecover(sample(0, active)), false);
+  assert.equal(busy.shouldRecover(sample(10000, active)), false);
+});
 test("static page and resized window do not cause repeated recovery", () => {
   const recovery = new ScreenRecovery();
   const changes = {

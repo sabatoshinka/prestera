@@ -1,73 +1,84 @@
-# Pibble Club
+<p align="center">
+  <img src="public/pibble.svg" alt="Prestera logo" width="112" height="112">
+</p>
 
-Небольшое настольное P2P-приложение для Windows 10/11 x64. Один участник открывает комнату на своём компьютере, друзья входят по приглашению. Без аккаунтов, облачной истории и обязательных внешних серверов.
+<h1 align="center">Prestera</h1>
 
-## Запуск готовой версии
+<p align="center">
+  A place to talk, stream, and listen together.<br>
+  Private rooms for up to 8 friends. No account required.
+</p>
 
-Распакуйте **всю папку** `Pibble-Club-0.2.0-win-x64` и откройте `Pibble Club.exe`. Для друзей передавайте архив целиком: один EXE без файлов Electron работать не будет. Пользовательские данные сохраняются в `PibbleData` рядом с EXE, поэтому папка должна быть доступна для записи.
+<p align="center">
+  <a href="https://github.com/sabatoshinka/prestera/releases/latest">
+    <img src="https://img.shields.io/badge/Download_for_Windows-Latest_release-c5b5e8?style=for-the-badge&amp;labelColor=191922" alt="Download the latest Windows release">
+  </a>
+  <a href="#host-your-own-server">
+    <img src="https://img.shields.io/badge/Self_host-Server_setup-9dd9d2?style=for-the-badge&amp;labelColor=191922" alt="Set up your own server">
+  </a>
+</p>
 
-**Для версии 0.2.0 обновите приложение у всех участников.** Защищённое подключение несовместимо с 0.1.0; перехода на старую схему нет. Чтобы сохранить свои настройки и историю, при закрытом приложении скопируйте свою папку `PibbleData` из старой portable-папки в новую. Друзьям отправляйте чистый архив без своей `PibbleData`.
+<p align="center">
+  Windows 10 / 11 &middot; x64 &middot; Portable
+</p>
 
-1. **Своя комната → Создать комнату**. Укажите имя и название.
-2. Скопируйте приглашение кнопкой **Приглашение**.
-3. Друг открывает **К друзьям** и вставляет строку `pibble://join?host=…&port=…&key=…`.
-4. Также принимается формат `адрес:порт#ключ`. Одна строка приглашения уже содержит всё необходимое.
+---
 
-Чтобы открывать приглашения кликом по ссылке, включите **Настройки → Профиль и данные → Открывать приглашения этим приложением**. Это необязательно: вставка строки работает сразу. Если переместили portable-папку, привяжите ссылки заново.
+## Make yourself at home
 
-Кнопка выхода создателя закрывает комнату у всех участников. Доставка отсутствующим участникам не предусмотрена.
+- **Voice and video** — noise suppression, microphone sensitivity controls, and individual volume settings.
+- **Screen sharing** — up to 1080p at 60 FPS, with application audio on supported Windows systems. Adjust the bitrate up to 50 Mbps per viewer, and move and resize camera overlays while watching a stream.
+- **Chat** — messages, images, GIFs, and files, with images opening right inside the app.
+- **Music and soundboard** — save playlists of local tracks, play music for the room, and import and trim sound clips. Control music volume separately from voices.
+- **Your own look** — avatars, profile banners, status messages, avatar frames, and custom backgrounds.
+- **Controls within reach** — global hotkeys, plus chat and soundboard controls while watching a stream.
 
-## Сеть
+Calls use encrypted WebRTC connections, and rooms require an invitation. Share invites only with people you want to join.
 
-По умолчанию комната слушает **TCP 45454** (управление) и **UDP 45454** (встроенное определение сетевых адресов, STUN). Адрес в приглашении можно указать при создании комнаты. В LAN или общей VPN-сети используйте адрес соответствующего сетевого адаптера.
+## Get started
 
-Для доступа через интернет создателю нужен доступный внешний IPv4/домен и перенаправление TCP/UDP выбранного порта на его ПК. При сером IP провайдера, симметричном NAT или запрете UDP прямое соединение может быть невозможно. Общая VPN-сеть решает часть таких случаев. TURN-ретранслятор в этой версии отсутствует. Работа между разными домашними сетями требует отдельного полевого тестирования.
+1. Open the **[latest release](https://github.com/sabatoshinka/prestera/releases/latest)** and download `Prestera-<version>-win-x64.zip` from **Assets**.
+2. Extract the entire archive into a writable folder and launch **`Prestera.exe`**.
+3. Choose a connection mode below, create a room, and send its invitation to your friends. They can paste it into the app to join.
 
-Разрешите программе сетевой доступ в брандмауэре Windows. WebRTC дополнительно использует динамические порты для прямых потоков. Программа не меняет брандмауэр, маршрутизатор и системные аудиоустройства автоматически.
+The app interface is currently in Russian. The room stays open while its creator is connected.
 
-Реализована mesh-топология: каждый участник соединяется с каждым. Голос, камера, демонстрация и файлы не пересылаются через комнатный сервер. Встроенный STUN не заменяет TURN. Для 1080p60 установлен верхний предел около **10 Мбит/с на зрителя**; на семь зрителей потребуются до 70 Мбит/с исходящего трафика только для одной демонстрации. Реальная скорость адаптируется к каналу.
+### Choose how to connect
 
-## Возможности
+| Mode | When to use it |
+| --- | --- |
+| **Direct** | On the same local network or VPN, or when the host is reachable over the internet with the required ports forwarded. |
+| **Your own server** | For friends on different networks, including behind carrier-grade NAT. Enter your server address in the app; no shared VPN is required. |
 
-- Комнаты до 8 участников; ник и цвет аватара без регистрации.
-- Микрофон с WebRTC noise suppression, echo cancellation и автоматической регулировкой усиления. Это стандартное шумоподавление WebRTC, не Krisp.
-- Выбор микрофона, камеры и устройства воспроизведения; общий уровень и громкость отдельного участника.
-- Камера до 720p30 и отдельная демонстрация окна/экрана: 1080p60, 1080p30, 720p60 или 720p30.
-- **Захват аудио выбранного процесса и дочерних процессов через нативный WASAPI-модуль.** Проверяется реальная работоспособность API; жёсткой блокировки по номеру сборки Windows нет. При ошибке отдельный звук не подменяется системным.
-- «Все звуки компьютера», «Без звука» и выбранный аудиовход — самостоятельные режимы.
-- Текст, эмодзи, вставка/перетаскивание изображений и GIF, файлы до 25 МБ по RTCDataChannel. Вложения собираются блоками с контролем размера и обратным давлением, чтобы не заполнять буфер передачи.
-- Локальная звуковая панель: импорт аудио до 30 секунд / 10 МБ, прослушивание, передача в голос, остановка и удаление. Три исходных сигнала синтезируются кодом, это не оригинальные записи мемов.
-- Глобальные настраиваемые сочетания клавиш, включая первые три звука панели.
-- Локальные настройки и история в IndexedDB. Онлайн-поиск GIF и доставка офлайн отсутствуют.
-- Минимальный тёмный интерфейс с небольшими отсылками к пиблам; сгенерированных иллюстраций нет.
+Prestera connects peers directly when possible. With your own server configured, a TURN relay carries traffic when a direct connection cannot be established. There is no bundled public server.
 
-60 FPS и разрешение — целевые ограничения захвата и кодирования, не гарантия при любой видеокарте, приложении или сети. Для неподвижного окна движок может выдавать меньше кадров. Для браузера захватывается звук выбранного процесса и его дерева: вкладки одного процесса нельзя обещать изолировать друг от друга.
+### Host your own server
 
-## Горячие клавиши
+The server runs on a Linux VPS through Docker Compose. A graphical desktop is not needed.
 
-| Действие             | По умолчанию           |
-| -------------------- | ---------------------- |
-| Микрофон             | Ctrl + Shift + M       |
-| Весь звук и микрофон | Ctrl + Shift + D       |
-| Камера               | Ctrl + Shift + V       |
-| Демонстрация         | Ctrl + Shift + S       |
-| Первые три звука     | Ctrl + Alt + 1 / 2 / 3 |
+Download `Prestera-Server-<version>.zip` from the **[latest release](https://github.com/sabatoshinka/prestera/releases/latest)**. You'll need Docker Engine with Compose, a public IP address, and a domain pointing to your VPS. In the extracted server directory, run:
 
-В настройках можно поменять сочетание или очистить поле. Уже занятые сочетания не перехватываются; приложение сообщает о конфликте при сохранении.
+```bash
+bash setup.sh
+docker compose up -d --build
+```
 
-## Передача и хранение
+The setup script generates the configuration. The stack includes HTTPS, room signaling, and a TURN relay.
 
-Медиапотоки защищены стандартным DTLS-SRTP WebRTC, чат и вложения — SCTP поверх DTLS. Для управления комнатой используется **WSS / TLS с обменом Diffie–Hellman X25519 и ChaCha20-Poly1305**. При каждом подключении обе стороны подтверждают владение случайным 256-битным секретом приглашения и получают новые сеансовые ключи. Секрет приглашения не отправляется по сети; одного адреса и порта для входа недостаточно.
+See the **[deployment guide](server/DEPLOY.md)** for firewall ports and configuration details *(guide currently in Russian)*.
 
-Используется только TLS 1.2 с набором `TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256` и X25519; восстановление TLS-сессий, повторное согласование, другие наборы шифров и незашифрованное подключение отключены. Это стандартный TLS в криптобиблиотеке Electron, а не собственный криптографический протокол. Подробности выбора и границы защиты — в [SECURITY.md](SECURITY.md).
+## Keep your setup
 
-Приглашение даёт доступ любому, у кого оно есть. Передавайте его лично; при утечке закройте комнату и создайте новую. Проверка личности по нику, ручное подтверждение входа и индивидуальный отзыв доступа не реализованы. Локальная история не зашифрована приложением. IP-адреса и факт соединения остаются видимы; лимиты запросов не гарантируют защиту от DDoS.
+Starting with **0.7.0**, settings, profiles, playlists, sounds, and local chat history live in **`%APPDATA%\Prestera\Profile`**, separate from app releases. On first launch, Prestera copies an existing `PibbleData` beside the app, or the most recently used profile from a neighboring Prestera release folder. The original stays intact. When upgrading from an older version, close it and extract the new release beside it; if you keep releases elsewhere, copy your old `PibbleData` beside the new executable before first launch.
 
-Текст рендерится как текст; вложения не выполняются автоматически. Загрузка внешнего содержимого в интерфейсе запрещена CSP. Нативные операции доступны через ограниченный изолированный preload API.
+In **Settings → Updates**, check GitHub for a new release, download it, then restart to apply it. Downloads are verified with SHA-256, and your profile stays in place. Automatic checks run at startup and can be disabled. Versions before 0.7.0 need one manual upgrade to get the updater.
 
-## Разработка
+Playlists reference your original audio files, so keep those files in place. Messages are delivered to connected participants; there is no offline delivery. Stream quality depends on your hardware and connection, and each additional viewer uses more upload bandwidth.
 
-Требуются Node.js 22+ и npm. Для нативного модуля — Visual Studio Build Tools с C++ и Windows SDK. Все зависимости фиксируются `package-lock.json`.
+<details>
+<summary><strong>Build from source</strong></summary>
+
+On Windows, install Node.js 22+, npm, Visual Studio 2022 C++ build tools, and a recent Windows SDK.
 
 ```powershell
 npm ci
@@ -75,40 +86,12 @@ npm run build:native
 npm start
 ```
 
-Сборка portable-папки:
+Create a portable build in `release/`:
 
 ```powershell
 npm run package
 ```
 
-Нативный модуль использует статический C runtime (`/MT`); отдельно устанавливать .NET и Visual C++ Redistributable не требуется. Chromium, React и остальные компоненты входят в portable-папку. Подпись Authenticode и автообновление для этой бета-версии не настроены.
+Built with Electron, React, WebRTC, and native Windows capture helpers.
 
-## Проверки
-
-```powershell
-npm test
-npm run test:electron
-npm run test:security-desktop
-npm run test:desktop
-node tests/audio-isolation.mjs
-```
-
-- Сетевые тесты под Node/OpenSSL и Electron/BoringSSL: X25519 и разные сеансовые ключи у 8 клиентов, неверный/отсутствующий секрет, поддельный сервер, запрет старого протокола и слабых наборов шифров, новое согласование при переподключении, изменение и повтор реальных TLS-пакетов, ограничения соединений, STUN и маршрутизация.
-- `test:security-desktop`: два экземпляра приложения, вход, прямой WebRTC, двусторонний чат, проверка SHA-256 файла. Настоящий микрофон, камера и захват экрана не используются; вывод звука отключён. Переменная `PIBBLE_TEST_EXE` позволяет проверить готовый EXE.
-- Desktop-тест: два настоящих экземпляра Electron, виртуальные микрофон и камера, прямое соединение, двусторонний чат, PNG/GIF, проверка SHA-256 файла 600 КБ, видео, захват собственного тестового окна и отдельная аудиодорожка приложения, настройки и закрытие комнаты. Звуковой выход тестовых клиентов отключён. Тест создаёт собственное окно с движущимся рисунком в фоне; другие окна не захватываются.
-- Аудиотест создаёт два собственных процесса с тихими тонами 440/880 Гц и проверяет, что захват первого процесса не содержит второй тон. Он воспроизводит звук; запускайте его в подходящий момент.
-- Скриншоты и фактические показатели тестов находятся в `test-results/` после запуска. Проверка двух экземпляров на одном ПК не доказывает качество интернет-связи или нагрузку восьми одновременных демонстраций.
-
-Последняя проверка на Windows 10 22H2 (19045): настоящий захват тестового окна 1920×1080, целевые 60 FPS; исходящий H.264-поток 1920×1080 при 59 FPS через Intel Quick Sync, одновременно камера 1280×720 при 30 FPS. Все автоматические сценарии завершились успешно. Это измерение одного локального прогона, не обещание одинаковой производительности на другом ПК.
-
-## Структура
-
-`desktop/room.cjs` — комната, зашифрованное управление и встроенный STUN. `desktop/main.cjs` — Windows/Electron API. `src/engine.js` — WebRTC, звук и файлы. `src/main.jsx` — интерфейс. `native/audio.cpp` — process-loopback захват PCM 48 кГц stereo. `public/pcm-worklet.js` — воспроизведение PCM в исходящую дорожку демонстрации.
-
-## Источники
-
-- [Пиблы и мем wash my belly](https://knowyourmeme.com/memes/i-am-pibble-wash-my-belly)
-- [Microsoft Application Loopback](https://learn.microsoft.com/en-us/samples/microsoft/windows-classic-samples/applicationloopbackaudio-sample/)
-- [Практическая поддержка API в Windows 10 — win-capture-audio](https://github.com/bozbez/win-capture-audio)
-- [Electron desktopCapturer](https://www.electronjs.org/docs/latest/api/desktop-capturer)
-- [WebRTC peer connections](https://webrtc.org/getting-started/peer-connections)
+</details>

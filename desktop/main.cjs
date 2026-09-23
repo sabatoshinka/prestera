@@ -14,6 +14,8 @@ const {
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 const fs = require("node:fs");
+const { prepareDataRoot } = require("./data-root.cjs");
+const { Updater, getInstalled } = require("./updater.cjs");
 const { GpuVideo } = require("./gpu-video.cjs");
 const crypto = require("node:crypto");
 const { MusicLibrary } = require("./library.cjs");
@@ -27,12 +29,46 @@ const {
 } = require("./room.cjs");
 
 const root = path.join(__dirname, "..");
-const dataRoot =
-  process.env.PIBBLE_DATA_DIR ||
-  (app.isPackaged
-    ? path.join(path.dirname(process.execPath), "PibbleData")
-    : path.join(root, ".cache", "profile"));
-fs.mkdirSync(dataRoot, { recursive: true });
+const updateBase = path.join(
+  process.env.LOCALAPPDATA || app.getPath("appData"),
+  "Prestera",
+  "versions",
+);
+const updatesEnabled =
+  app.isPackaged &&
+  process.platform === "win32" &&
+  !process.env.PIBBLE_TEST &&
+  !process.env.PIBBLE_DATA_DIR;
+// Existing shortcuts to an earlier build keep opening the activated version.
+const installed = updatesEnabled && getInstalled(updateBase, app.getVersion());
+if (installed) {
+  app.relaunch({
+    execPath: installed,
+    args: process.argv
+      .slice(1)
+      .filter((arg) => /^(prestera|pibble):\/\//.test(arg)),
+  });
+  app.quit();
+  return;
+}
+let dataRoot;
+try {
+  dataRoot = prepareDataRoot({
+    override: process.env.PIBBLE_DATA_DIR,
+    packaged: app.isPackaged,
+    root,
+    appData: app.getPath("appData"),
+    executable: process.execPath,
+  });
+} catch (error) {
+  dialog.showErrorBox(
+    "Prestera: перенос данных",
+    "Не удалось перенести профиль. Исходная PibbleData сохранена.\n" +
+      error.message,
+  );
+  app.quit();
+  return;
+}
 app.setPath("userData", dataRoot);
 if (!process.env.PIBBLE_TEST && !app.requestSingleInstanceLock()) {
   app.quit();
@@ -58,6 +94,7 @@ let win,
   captureProcess,
   pendingInvite;
 let library;
+let updater;
 const musicLibrary = () => (library ||= new MusicLibrary(dataRoot));
 let hotkeyFailures = [];
 const nativePath = path.join(root, "native", "bin", "pibble-audio.exe");
@@ -106,6 +143,8 @@ const defaults = {
   outputGain: 100,
   soundGain: 65,
   quality: "1080p60",
+  streamMbps: 0,
+  checkUpdates: true,
   hotkeys: {
     mic: "Control+Shift+M",
     deafen: "Control+Shift+D",
@@ -351,6 +390,7 @@ app.whenReady().then(async () => {
       path.join(root, "native", "bin", "prestera-gpu-video.exe"),
     ),
     version: app.getVersion(),
+    dataPath: dataRoot,
     pendingInvite,
     hotkeyFailures,
   }));
@@ -378,6 +418,7 @@ app.whenReady().then(async () => {
       ["gateThreshold", -80, -10],
       ["gateHold", 50, 1000],
       ["color", 0, 5],
+      ["streamMbps", 0, 50],
     ]) {
       if (Object.hasOwn(allowed, key))
         allowed[key] = Number.isFinite(Number(allowed[key]))
@@ -439,7 +480,12 @@ app.whenReady().then(async () => {
       !/^#[a-f\d]{6}$/i.test(allowed.profileColor)
     )
       throw new Error("Некорректный цвет профиля");
-    for (const key of ["eventSounds", "messageSounds", "captureBorder"])
+    for (const key of [
+      "eventSounds",
+      "messageSounds",
+      "captureBorder",
+      "checkUpdates",
+    ])
       if (Object.hasOwn(allowed, key)) allowed[key] = !!allowed[key];
     if (
       Object.hasOwn(allowed, "captureMode") &&
@@ -463,6 +509,33 @@ app.whenReady().then(async () => {
       path.join(dataRoot, "settings.json"),
     );
     return { failures: registerKeys(settings.hotkeys) };
+  });
+  updater = new Updater({
+    version: app.getVersion(),
+    enabled: updatesEnabled,
+    base: updateBase,
+    fetcher: (url, options) => net.fetch(url, options),
+    notify: (value) => send("updates:state", value),
+  });
+  handle("updates:state", () => updater.snapshot());
+  handle("updates:check", () => updater.check());
+  handle("updates:download", () => updater.download());
+  handle("updates:cancel", () => updater.cancel());
+  let updateRestarting = false;
+  handle("updates:install", async () => {
+    if (updateRestarting) return;
+    if (client || host || relayHost)
+      throw new Error(
+        "Сначала выйди из комнаты, чтобы обновление не прервало звонок.",
+      );
+    const executable = updater.activate();
+    updateRestarting = true;
+    app.relaunch({ execPath: executable, args: [] });
+    app.quit();
+  });
+  handle("data:open", async () => {
+    const error = await shell.openPath(dataRoot);
+    if (error) throw new Error(error);
   });
   handle("music:library", () => musicLibrary().snapshot());
   handle("music:update", (value) => musicLibrary().update(value));
@@ -670,6 +743,7 @@ app.whenReady().then(async () => {
   );
   if (initialInvite) pendingInvite = initialInvite;
   await win.loadURL("pibble-app://club/index.html");
+  if (updatesEnabled && settings.checkUpdates) updater.check();
 });
 app.on("window-all-closed", () => app.quit());
 app.on("second-instance", (event, args) => {
@@ -685,6 +759,7 @@ app.on("second-instance", (event, args) => {
   }
 });
 app.on("before-quit", () => {
+  updater?.cancel();
   relayHost?.close();
   windowVideo.stop();
   globalShortcut.unregisterAll();

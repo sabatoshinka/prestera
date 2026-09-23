@@ -1717,6 +1717,16 @@ small {
   gap: 22px;
   margin: 25px 0;
 }
+.bitrate-control {
+  margin: 22px 0;
+  padding: 16px;
+  border: 1px solid #ffffff0c;
+  border-radius: 12px;
+  background: #ffffff03;
+}
+.bitrate-control .text-button {
+  margin-top: 10px;
+}
 .slider {
   display: block;
   font-size: 11px;

@@ -44,6 +44,8 @@ import {
   Music2,
 } from "lucide-react";
 import { ClubEngine, QUALITY } from "./engine";
+import { BitrateControl } from "./bitrate-control";
+import { UpdatesPanel, useUpdates } from "./updates";
 import { dbAll, dbPut, dbDelete, dbClear, recentMessages } from "./storage";
 import { IconButton, Avatar, Modal, Field, Toggle } from "./ui";
 import { ProfileDialog, ProfileSettings, PersonPopover } from "./profiles";
@@ -994,6 +996,8 @@ function ShareDialog({
   start,
   devices,
   quality: initialQuality,
+  streamMbps: initialMbps,
+  viewers,
   captureMode,
   notify,
 }) {
@@ -1002,6 +1006,7 @@ function ShareDialog({
     [tab, setTab] = useState("window"),
     [audio, setAudio] = useState("app"),
     [quality, setQuality] = useState(initialQuality || "1080p60"),
+    [streamMbps, setStreamMbps] = useState(initialMbps || 0),
     [mode, setMode] = useState(captureMode || "borderless"),
     [device, setDevice] = useState(""),
     [busy, setBusy] = useState(false),
@@ -1106,6 +1111,12 @@ function ShareDialog({
           </select>
         </Field>
       </div>
+      <BitrateControl
+        value={streamMbps}
+        onChange={setStreamMbps}
+        viewers={viewers}
+        defaultMbps={(QUALITY[quality]?.bitrate || 10000000) / 1000000}
+      />
       {tab === "window" && (
         <Field label="Способ захвата окна">
           <select
@@ -1163,7 +1174,14 @@ function ShareDialog({
           setBusy(true);
           setError("");
           try {
-            await start({ ...selected, audio, quality, device, mode });
+            await start({
+              ...selected,
+              audio,
+              quality,
+              device,
+              mode,
+              streamMbps,
+            });
             close();
           } catch (err) {
             setError(friendlyError(err));
@@ -1227,6 +1245,7 @@ function SettingsDialog({
           ["audio", "Голос и видео"],
           ["keys", "Горячие клавиши"],
           ["profile", "Профиль и данные"],
+          ["updates", "Обновления"],
         ].map(([id, name]) => (
           <button
             key={id}
@@ -1270,6 +1289,17 @@ function SettingsDialog({
               ))}
             </div>
             <MicrophoneSettings draft={draft} set={set} notify={notify} />
+            <BitrateControl
+              value={draft.streamMbps}
+              onChange={(value) => set("streamMbps", value)}
+              defaultMbps={
+                (QUALITY[draft.quality]?.bitrate || 10000000) / 1000000
+              }
+            />
+            <p className="muted small">
+              Новый лимит применяется после сохранения, в том числе к текущему
+              стриму.
+            </p>
             <Toggle
               label="Звуки событий"
               description="Вход и выход, микрофон, наушники, камера и демонстрация. Слышны только тебе."
@@ -1313,6 +1343,8 @@ function SettingsDialog({
               onChange={(v) => set("echo", v)}
             />
           </>
+        ) : tab === "updates" ? (
+          <UpdatesPanel draft={draft} set={set} notify={notify} />
         ) : tab === "keys" ? (
           <>
             <p className="notice">
@@ -1432,6 +1464,7 @@ function SettingsDialog({
 }
 
 function App() {
+  const update = useUpdates();
   const [settings, setSettings] = useState(null),
     [session, setSession] = useState({ room: null, peers: [], state: {} }),
     [view, setView] = useState("room"),
@@ -1819,6 +1852,24 @@ function App() {
           </div>
         )}
         <div className="sidebar-spacer" />
+        {["available", "downloading", "extracting", "ready"].includes(
+          update.status,
+        ) && (
+          <button
+            className="settings-button"
+            onClick={() => {
+              setSettingsTab("updates");
+              setModal("settings");
+            }}
+          >
+            <Download size={17} />{" "}
+            {update.status === "ready"
+              ? "Обновление готово"
+              : update.status === "available"
+                ? `Доступна ${update.version}`
+                : "Загрузка обновления…"}
+          </button>
+        )}
         <div className="sidebar-aside">
           <Sparkles size={16} />
           <p>
@@ -2275,9 +2326,21 @@ function App() {
       {modal === "share" && (
         <ShareDialog
           close={() => setModal(null)}
-          start={(choice) => engine.current.startShare(choice)}
+          start={async (choice) => {
+            const next = {
+              ...settings,
+              quality: choice.quality,
+              streamMbps: choice.streamMbps,
+            };
+            await bridge.saveSettings(next);
+            setSettings(next);
+            await engine.current.applySettings(next);
+            await engine.current.startShare(choice);
+          }}
           devices={devices}
           quality={settings.quality}
+          streamMbps={settings.streamMbps}
+          viewers={session.peers?.length || 1}
           captureMode={settings.captureMode}
           notify={notify}
         />

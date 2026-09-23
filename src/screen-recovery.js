@@ -6,7 +6,7 @@ export class ScreenRecovery {
     this.lastAttempt = -Infinity;
     this.count = 0;
   }
-  shouldRecover({ outbound, network, source, bitrate, now }) {
+  shouldRecover({ outbound, network, source, bitrate, presetBitrate, now }) {
     const inputWidth = outbound.inputWidth || source?.width;
     const inputHeight = outbound.inputHeight || source?.height;
     const scaled =
@@ -20,10 +20,17 @@ export class ScreenRecovery {
       outbound.inputFps >= 20 &&
       outbound.fps > 0 &&
       outbound.fps < outbound.inputFps * 0.65;
+    // A user-selected ceiling (e.g. 50 Mbps) is not the bandwidth required to
+    // recover a 1080p stream. Still require spare capacity above the current
+    // traffic and the original quality preset before trying an upward probe.
+    const recoveryTarget = Math.min(
+      bitrate,
+      Math.max(presetBitrate || bitrate, outbound.kbps * 1250),
+    );
     const healthy =
       outbound.limitation === "none" &&
       outbound.kbps > 0 &&
-      network.availableOutgoingBitrate >= bitrate * 1.2 &&
+      network.availableOutgoingBitrate >= recoveryTarget * 1.2 &&
       Number.isFinite(network.rtt) &&
       network.rtt < 200 &&
       Number.isFinite(outbound.remoteLoss) &&

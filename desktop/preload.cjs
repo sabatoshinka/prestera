@@ -20,6 +20,13 @@ const listen = (channel, callback) => {
 };
 contextBridge.exposeInMainWorld("pibble", {
   getSettings: () => ipcRenderer.invoke("settings:get"),
+  updateState: () => ipcRenderer.invoke("updates:state"),
+  checkUpdates: () => ipcRenderer.invoke("updates:check"),
+  downloadUpdate: () => ipcRenderer.invoke("updates:download"),
+  cancelUpdate: () => ipcRenderer.invoke("updates:cancel"),
+  installUpdate: () => ipcRenderer.invoke("updates:install"),
+  onUpdate: (callback) => listen("updates:state", callback),
+  openDataFolder: () => ipcRenderer.invoke("data:open"),
   musicLibrary: () => ipcRenderer.invoke("music:library"),
   updatePlaylist: (value) => ipcRenderer.invoke("music:update", value),
   addPlaylistFiles: (id) => ipcRenderer.invoke("music:add", id),

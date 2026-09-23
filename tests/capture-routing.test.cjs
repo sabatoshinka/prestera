@@ -18,6 +18,9 @@ function setup(nativeCapture) {
   const track = { stop() {}, getSettings: () => ({ width: 640, height: 360 }) };
   const stream = { getTracks: () => [track], getVideoTracks: () => [track] };
   const Engine = vm.runInNewContext(source + "\nClubEngine", {
+    streamBitrate: vm.runInNewContext(
+      fs.readFileSync("src/stream-quality.js", "utf8").replaceAll("export ", "") + "\nstreamBitrate",
+    ),
     window: { pibble: bridge },
     EventAudio: class {
       play() {}
